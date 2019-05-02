@@ -17,22 +17,6 @@
 
 #define OPTS_STR "+:c"
 
-#define pid_hide_unhide(fd,pidvar,cmd_buf,cmd,curproc)			\
-	do{									\
-		if (curproc)							\
-		{								\
-			pidvar = getpid();					\
-		}								\
-		else								\
-		{								\
-			pidvar = atoi(optarg);					\
-		}								\
-		memset(cmd_buf,0x0,BUF_SIZE);					\
-		sprintf(cmd_buf,cmd"%d",pidvar);				\
-	}while(0)
-
-
-
 int main(int argc,char **argv)
 {
 	char hidepid_cmd[BUF_SIZE];
