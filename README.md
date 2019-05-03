@@ -11,3 +11,12 @@ gcc -o client client.c
 insmod rootkit.ko
 ./client
 ```
+* How to use compile client:
+```
+./client [-s PID_TO_HIDE] [-h PID_TO_UNHIDE] [-c]  
+
+[-c] hide current process  
+[-s] hide PID_TO_HIDE  
+[-h] unhide PID_TO_UNHIDE  
+
+```
