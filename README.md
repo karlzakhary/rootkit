@@ -20,3 +20,15 @@ insmod rootkit.ko
 [-h] unhide PID_TO_UNHIDE  
 
 ```
+Demo + Howto
+------------
+
+[![Rootkit Demo](http://img.youtube.com/vi/xDz88j4SEJY/0.jpg)](https://youtu.be/xDz88j4SEJY)
+
+Project Contributors
+--------------------
+* Michael Sherif
+* Carol Emad
+* Ahmed Houssam
+* Mohamed Maged
+* Karl Maged
